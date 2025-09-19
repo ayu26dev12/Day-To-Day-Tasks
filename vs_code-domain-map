@@ -1,0 +1,37 @@
+// This file is for ssh with vs_code with domain
+
+Install nginx on ec2-instance and add this file in /etc/nginx/sites-available
+
+server {
+    server_name domain_name;
+
+    location / {
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;                    
+    }
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/domain_name/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/domain_name/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+server {
+    if ($host = domain_name) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    listen 80;
+    server_name domain_name;
+    return 404; # managed by Certbot
+}
+
+Add this ec2-instance public_ip for dns mapping (cloudflare) and give sub-domain, domain_name
+
+// Add this on vs-code and don't forgot to move public_key.pem file in .ssh folder of your local machine  
+Host Ec2-Instance
+  HostName domain_name
+  User ubuntu
+  IdentityFile ~/.ssh/public_key.pem
